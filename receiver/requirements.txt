@@ -1,0 +1,6 @@
+# Receiver P2P — dependências Python
+# Instale com:  pip install -r requirements.txt
+aiortc==1.14.0
+websockets==16.1
+opencv-python==5.0.0.93
+numpy==2.5.1
