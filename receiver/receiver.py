@@ -162,6 +162,26 @@ async def handler(websocket):
         print("[WEBSOCKET] Sessão limpa. Aguardando nova conexão do celular...")
 
 
+async def anunciar_presenca():
+    """Grita na rede local, a cada 2s, um pacotinho UDP de broadcast
+    dizendo 'o receiver do Phone Can mora aqui'. O app escuta esses
+    gritos e descobre o IP sozinho — fim do IP hardcoded.
+    O IP do remetente vai de brinde em todo pacote UDP, então o
+    payload só precisa identificar o serviço e a porta."""
+    DISCOVERY_PORT = 8766
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.setblocking(False)
+    mensagem = json.dumps({"service": "phone-can", "port": 8765}).encode()
+    print(f"[DISCOVERY] Anunciando presença via broadcast UDP :{DISCOVERY_PORT} a cada 2s...")
+    while True:
+        try:
+            sock.sendto(mensagem, ("255.255.255.255", DISCOVERY_PORT))
+        except OSError as e:
+            print(f"[DISCOVERY] Falha no anúncio (rede indisponível?): {e}")
+        await asyncio.sleep(2)
+
+
 async def servidor():
     hostname = socket.gethostname()
     try:
@@ -174,6 +194,7 @@ async def servidor():
     print("[SERVER] Aguardando o Flutter iniciar o aperto de mão...")
 
     async with websockets.serve(handler, "0.0.0.0", 8765):
+        asyncio.create_task(anunciar_presenca())
         await asyncio.Future()  # roda pra sempre
 
 
